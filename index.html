@@ -161,13 +161,17 @@
     .drum-btn .drum-size { font-size: 8px; color: var(--muted); }
     .drum-btn.selected .drum-name { color: var(--accent); }
 
-    .mode-row {
+    .mode-row,
+    .preset-row,
+    .tuning-row {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .mode-btn {
-      flex: 1;
+    .mode-btn,
+    .mini-btn,
+    .action-btn {
       background: var(--surface2);
       color: var(--text);
       border: 1px solid var(--border);
@@ -180,18 +184,27 @@
       text-transform: uppercase;
     }
 
-    .mode-btn.selected {
+    .mode-btn {
+      flex: 1;
+    }
+
+    .mode-btn.selected,
+    .mini-btn.selected {
       border-color: var(--accent);
       background: rgba(232,255,71,0.07);
       color: var(--accent);
     }
 
-    .target-info {
+    .target-info,
+    .editor-card {
       margin: 16px 20px 0;
       padding: 14px 16px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 12px;
+    }
+
+    .target-info {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -227,6 +240,62 @@
       font-size: 12px;
       color: var(--text);
       margin-top: 2px;
+    }
+
+    .editor-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .editor-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #101010;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    .helper {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.4;
     }
 
     .meter-section {
@@ -490,9 +559,14 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
+    @media (max-width: 640px) {
+      .editor-grid,
+      .editor-grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-180.png" />
 </head>
 <body>
   <header>
@@ -534,6 +608,74 @@
     <div class="target-range">
       <div class="target-range-label">Tune Range</div>
       <div class="target-range-val" id="targetRange">— Hz</div>
+    </div>
+  </div>
+
+  <div class="editor-card">
+    <div class="section-label">Custom Tuning</div>
+
+    <div class="editor-grid-3">
+      <div class="field">
+        <label for="noteSelect">Note</label>
+        <select id="noteSelect"></select>
+      </div>
+
+      <div class="field">
+        <label for="octaveSelect">Octave</label>
+        <select id="octaveSelect"></select>
+      </div>
+
+      <div class="field">
+        <label for="customHzInput">Frequency (Hz)</label>
+        <input id="customHzInput" type="number" min="30" max="1000" step="0.1" />
+      </div>
+    </div>
+
+    <div class="tuning-row">
+      <button class="action-btn" id="applyNoteBtn">Use Note</button>
+      <button class="action-btn" id="applyHzBtn">Use Frequency</button>
+      <button class="action-btn" id="resetDrumBtn">Reset Drum</button>
+    </div>
+
+    <div class="helper">
+      Custom tuning is saved separately for each drum and for batter/resonant head mode.
+    </div>
+  </div>
+
+  <div class="editor-card">
+    <div class="section-label">Presets</div>
+
+    <div class="preset-row">
+      <button class="mini-btn" id="presetDefaultBtn">Default</button>
+      <button class="mini-btn" id="presetJazzBtn">Jazz</button>
+      <button class="mini-btn" id="presetRockBtn">Rock</button>
+      <button class="mini-btn" id="presetLowBtn">Low Punch</button>
+    </div>
+
+    <div class="editor-grid">
+      <div class="field">
+        <label for="presetSlotSelect">Preset Slot</label>
+        <select id="presetSlotSelect">
+          <option value="slot1">Custom Slot 1</option>
+          <option value="slot2">Custom Slot 2</option>
+          <option value="slot3">Custom Slot 3</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="presetNameInput">Preset Name</label>
+        <input id="presetNameInput" type="text" placeholder="My Kit Tuning" maxlength="30" />
+      </div>
+    </div>
+
+    <div class="tuning-row">
+      <button class="action-btn" id="savePresetBtn">Save to Slot</button>
+      <button class="action-btn" id="loadPresetBtn">Load Slot</button>
+      <button class="action-btn" id="deletePresetBtn">Delete Slot</button>
+    </div>
+
+    <div class="helper" id="presetStatus">
+      Built-in presets set the whole kit instantly. Custom slots save your current tuning map.
     </div>
   </div>
 
@@ -584,45 +726,82 @@
 
 <script>
 const DRUMS = [
-  {
-    id: 'snare_14x5', icon: '🥁', name: 'Snare', size: '14×5"',
-    batterHz: 175.0, resonantHz: 185.0, rangeHz: 24
-  },
-  {
-    id: 'snare_14x65', icon: '🥁', name: 'Deep Snare', size: '14×6.5"',
-    batterHz: 146.8, resonantHz: 155.6, rangeHz: 22
-  },
-  {
-    id: 'tom_10', icon: '🪘', name: 'Tom', size: '10"',
-    batterHz: 207.7, resonantHz: 220.0, rangeHz: 24
-  },
-  {
-    id: 'tom_12', icon: '🪘', name: 'Tom', size: '12"',
-    batterHz: 164.8, resonantHz: 174.6, rangeHz: 22
-  },
-  {
-    id: 'tom_14', icon: '🪘', name: 'Tom', size: '14"',
-    batterHz: 130.8, resonantHz: 138.6, rangeHz: 20
-  },
-  {
-    id: 'floorton_16', icon: '🪘', name: 'Floor Tom', size: '16"',
-    batterHz: 103.8, resonantHz: 110.0, rangeHz: 18
-  },
-  {
-    id: 'floorton_18', icon: '🪘', name: 'Floor Tom', size: '18"',
-    batterHz: 82.4, resonantHz: 87.3, rangeHz: 16
-  },
-  {
-    id: 'kick_22', icon: '🥁', name: 'Bass Drum', size: '22"',
-    batterHz: 52.0, resonantHz: 55.0, rangeHz: 10
-  },
-  {
-    id: 'kick_20', icon: '🥁', name: 'Bass Drum', size: '20"',
-    batterHz: 58.3, resonantHz: 61.7, rangeHz: 10
-  }
+  { id: 'snare_14x5',   icon: '🥁', name: 'Snare',     size: '14×5"',   batterHz: 175.0, resonantHz: 185.0, rangeHz: 24 },
+  { id: 'snare_14x65',  icon: '🥁', name: 'Deep Snare', size: '14×6.5"', batterHz: 146.8, resonantHz: 155.6, rangeHz: 22 },
+  { id: 'tom_10',       icon: '🪘', name: 'Tom',       size: '10"',      batterHz: 207.7, resonantHz: 220.0, rangeHz: 24 },
+  { id: 'tom_12',       icon: '🪘', name: 'Tom',       size: '12"',      batterHz: 164.8, resonantHz: 174.6, rangeHz: 22 },
+  { id: 'tom_14',       icon: '🪘', name: 'Tom',       size: '14"',      batterHz: 130.8, resonantHz: 138.6, rangeHz: 20 },
+  { id: 'floorton_16',  icon: '🪘', name: 'Floor Tom', size: '16"',      batterHz: 103.8, resonantHz: 110.0, rangeHz: 18 },
+  { id: 'floorton_18',  icon: '🪘', name: 'Floor Tom', size: '18"',      batterHz: 82.4,  resonantHz: 87.3,  rangeHz: 16 },
+  { id: 'kick_22',      icon: '🥁', name: 'Bass Drum', size: '22"',      batterHz: 52.0,  resonantHz: 55.0,  rangeHz: 10 },
+  { id: 'kick_20',      icon: '🥁', name: 'Bass Drum', size: '20"',      batterHz: 58.3,  resonantHz: 61.7,  rangeHz: 10 }
 ];
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const BUILTIN_PRESETS = {
+  default: {},
+  jazz: {
+    snare_14x5_batter: 185.0,
+    snare_14x5_resonant: 196.0,
+    snare_14x65_batter: 155.6,
+    snare_14x65_resonant: 164.8,
+    tom_10_batter: 220.0,
+    tom_10_resonant: 233.1,
+    tom_12_batter: 174.6,
+    tom_12_resonant: 185.0,
+    tom_14_batter: 138.6,
+    tom_14_resonant: 146.8,
+    floorton_16_batter: 110.0,
+    floorton_16_resonant: 116.5,
+    floorton_18_batter: 87.3,
+    floorton_18_resonant: 92.5,
+    kick_22_batter: 58.3,
+    kick_22_resonant: 61.7,
+    kick_20_batter: 61.7,
+    kick_20_resonant: 65.4
+  },
+  rock: {
+    snare_14x5_batter: 174.6,
+    snare_14x5_resonant: 185.0,
+    snare_14x65_batter: 146.8,
+    snare_14x65_resonant: 155.6,
+    tom_10_batter: 196.0,
+    tom_10_resonant: 207.7,
+    tom_12_batter: 164.8,
+    tom_12_resonant: 174.6,
+    tom_14_batter: 130.8,
+    tom_14_resonant: 138.6,
+    floorton_16_batter: 98.0,
+    floorton_16_resonant: 103.8,
+    floorton_18_batter: 82.4,
+    floorton_18_resonant: 87.3,
+    kick_22_batter: 52.0,
+    kick_22_resonant: 55.0,
+    kick_20_batter: 55.0,
+    kick_20_resonant: 58.3
+  },
+  low: {
+    snare_14x5_batter: 164.8,
+    snare_14x5_resonant: 174.6,
+    snare_14x65_batter: 138.6,
+    snare_14x65_resonant: 146.8,
+    tom_10_batter: 185.0,
+    tom_10_resonant: 196.0,
+    tom_12_batter: 155.6,
+    tom_12_resonant: 164.8,
+    tom_14_batter: 123.5,
+    tom_14_resonant: 130.8,
+    floorton_16_batter: 92.5,
+    floorton_16_resonant: 98.0,
+    floorton_18_batter: 77.8,
+    floorton_18_resonant: 82.4,
+    kick_22_batter: 49.0,
+    kick_22_resonant: 52.0,
+    kick_20_batter: 52.0,
+    kick_20_resonant: 55.0
+  }
+};
 
 let selectedDrum = DRUMS[0];
 let headMode = 'batter';
@@ -646,6 +825,9 @@ let hitStartTime = 0;
 let recentPitches = [];
 let lastAcceptedFreq = null;
 
+let customTunings = JSON.parse(localStorage.getItem('drumTunings') || '{}');
+let savedPresetSlots = JSON.parse(localStorage.getItem('drumPresetSlots') || '{}');
+
 const RMS_SILENCE = 0.01;
 const HIT_THRESHOLD = 0.045;
 const HIT_HOLD_MS = 220;
@@ -660,6 +842,24 @@ const resonantBtn = document.getElementById('resonantBtn');
 const targetNote = document.getElementById('targetNote');
 const targetFreq = document.getElementById('targetFreq');
 const targetRange = document.getElementById('targetRange');
+
+const noteSelect = document.getElementById('noteSelect');
+const octaveSelect = document.getElementById('octaveSelect');
+const customHzInput = document.getElementById('customHzInput');
+const applyNoteBtn = document.getElementById('applyNoteBtn');
+const applyHzBtn = document.getElementById('applyHzBtn');
+const resetDrumBtn = document.getElementById('resetDrumBtn');
+
+const presetDefaultBtn = document.getElementById('presetDefaultBtn');
+const presetJazzBtn = document.getElementById('presetJazzBtn');
+const presetRockBtn = document.getElementById('presetRockBtn');
+const presetLowBtn = document.getElementById('presetLowBtn');
+const presetSlotSelect = document.getElementById('presetSlotSelect');
+const presetNameInput = document.getElementById('presetNameInput');
+const savePresetBtn = document.getElementById('savePresetBtn');
+const loadPresetBtn = document.getElementById('loadPresetBtn');
+const deletePresetBtn = document.getElementById('deletePresetBtn');
+const presetStatus = document.getElementById('presetStatus');
 
 const detectedDisplay = document.getElementById('detectedDisplay');
 const detectedNote = document.getElementById('detectedNote');
@@ -677,8 +877,19 @@ const waveCtx = waveCanvas.getContext('2d');
 const historyList = document.getElementById('historyList');
 const clearBtn = document.getElementById('clearBtn');
 
-function currentTargetHz() {
-  return headMode === 'batter' ? selectedDrum.batterHz : selectedDrum.resonantHz;
+function drumKey(drumId = selectedDrum.id, mode = headMode) {
+  return `${drumId}_${mode}`;
+}
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function noteOctaveToFreq(note, octave) {
+  const idx = NOTE_NAMES.indexOf(note);
+  if (idx < 0) return null;
+  const midi = (parseInt(octave, 10) + 1) * 12 + idx;
+  return midiToFreq(midi);
 }
 
 function freqToNote(freq) {
@@ -707,6 +918,16 @@ function centsFromTarget(freq, target) {
   return Math.round(1200 * Math.log2(freq / target));
 }
 
+function getDefaultTargetHz(drum = selectedDrum, mode = headMode) {
+  return mode === 'batter' ? drum.batterHz : drum.resonantHz;
+}
+
+function currentTargetHz() {
+  const key = drumKey();
+  if (customTunings[key]) return customTunings[key];
+  return getDefaultTargetHz();
+}
+
 function getTuneClass(cents) {
   const abs = Math.abs(cents);
   if (abs <= 5) return 'tuned';
@@ -725,6 +946,18 @@ function getTuneStatus(cents, locked) {
 function setStatus(obj) {
   statusBar.className = 'status-bar' + (obj.cls ? ' ' + obj.cls : '');
   statusText.textContent = obj.text;
+}
+
+function populateNoteControls() {
+  noteSelect.innerHTML = NOTE_NAMES.map(n => `<option value="${n}">${n}</option>`).join('');
+  octaveSelect.innerHTML = [0,1,2,3,4,5].map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+function updateNoteControlsFromHz(hz) {
+  const n = freqToNote(hz);
+  noteSelect.value = n.name;
+  octaveSelect.value = String(n.octave);
+  customHzInput.value = hz.toFixed(1);
 }
 
 function buildDrumGrid() {
@@ -771,6 +1004,7 @@ function updateTargetDisplay() {
   targetNote.textContent = freqToNoteStr(hz);
   targetFreq.textContent = `${hz.toFixed(1)} Hz`;
   targetRange.textContent = `${(hz - selectedDrum.rangeHz).toFixed(0)}–${(hz + selectedDrum.rangeHz).toFixed(0)} Hz`;
+  updateNoteControlsFromHz(hz);
 }
 
 function resetMeter() {
@@ -786,6 +1020,124 @@ function resetMeter() {
   recentPitches = [];
   setStatus({ text: 'Listening for a drum hit...', cls: 'listening' });
 }
+
+function saveTunings() {
+  localStorage.setItem('drumTunings', JSON.stringify(customTunings));
+}
+
+function setCurrentDrumCustomHz(hz) {
+  if (!hz || hz < 30 || hz > 1000) return;
+  customTunings[drumKey()] = Number(hz.toFixed(1));
+  saveTunings();
+  updateTargetDisplay();
+  resetMeter();
+}
+
+applyNoteBtn.addEventListener('click', () => {
+  const hz = noteOctaveToFreq(noteSelect.value, octaveSelect.value);
+  if (!hz) return;
+  setCurrentDrumCustomHz(hz);
+});
+
+applyHzBtn.addEventListener('click', () => {
+  const hz = parseFloat(customHzInput.value);
+  if (!hz || hz < 30 || hz > 1000) {
+    presetStatus.textContent = 'Enter a valid frequency between 30 Hz and 1000 Hz.';
+    return;
+  }
+  setCurrentDrumCustomHz(hz);
+  presetStatus.textContent = `Saved ${selectedDrum.name} ${headMode} target at ${hz.toFixed(1)} Hz.`;
+});
+
+resetDrumBtn.addEventListener('click', () => {
+  delete customTunings[drumKey()];
+  saveTunings();
+  updateTargetDisplay();
+  resetMeter();
+  presetStatus.textContent = `Reset ${selectedDrum.name} ${headMode} to its default target.`;
+});
+
+noteSelect.addEventListener('change', () => {
+  const hz = noteOctaveToFreq(noteSelect.value, octaveSelect.value);
+  if (hz) customHzInput.value = hz.toFixed(1);
+});
+
+octaveSelect.addEventListener('change', () => {
+  const hz = noteOctaveToFreq(noteSelect.value, octaveSelect.value);
+  if (hz) customHzInput.value = hz.toFixed(1);
+});
+
+function applyPresetMap(map) {
+  customTunings = { ...map };
+  saveTunings();
+  updateTargetDisplay();
+  resetMeter();
+}
+
+function applyBuiltInPreset(name) {
+  if (name === 'default') {
+    customTunings = {};
+  } else {
+    customTunings = { ...BUILTIN_PRESETS[name] };
+  }
+  saveTunings();
+  updateTargetDisplay();
+  resetMeter();
+  presetStatus.textContent = `Applied ${name === 'default' ? 'Default' : name.charAt(0).toUpperCase() + name.slice(1)} preset to the whole kit.`;
+}
+
+presetDefaultBtn.addEventListener('click', () => applyBuiltInPreset('default'));
+presetJazzBtn.addEventListener('click', () => applyBuiltInPreset('jazz'));
+presetRockBtn.addEventListener('click', () => applyBuiltInPreset('rock'));
+presetLowBtn.addEventListener('click', () => applyBuiltInPreset('low'));
+
+function savePresetSlots() {
+  localStorage.setItem('drumPresetSlots', JSON.stringify(savedPresetSlots));
+}
+
+savePresetBtn.addEventListener('click', () => {
+  const slot = presetSlotSelect.value;
+  const name = (presetNameInput.value || slot).trim();
+  savedPresetSlots[slot] = {
+    name,
+    tunings: { ...customTunings }
+  };
+  savePresetSlots();
+  presetStatus.textContent = `Saved current kit tuning to ${name}.`;
+});
+
+loadPresetBtn.addEventListener('click', () => {
+  const slot = presetSlotSelect.value;
+  const data = savedPresetSlots[slot];
+  if (!data) {
+    presetStatus.textContent = 'That preset slot is empty.';
+    return;
+  }
+  customTunings = { ...data.tunings };
+  saveTunings();
+  updateTargetDisplay();
+  resetMeter();
+  presetNameInput.value = data.name || '';
+  presetStatus.textContent = `Loaded preset: ${data.name || slot}.`;
+});
+
+deletePresetBtn.addEventListener('click', () => {
+  const slot = presetSlotSelect.value;
+  if (!savedPresetSlots[slot]) {
+    presetStatus.textContent = 'That preset slot is already empty.';
+    return;
+  }
+  delete savedPresetSlots[slot];
+  savePresetSlots();
+  presetStatus.textContent = `Deleted ${slot}.`;
+  presetNameInput.value = '';
+});
+
+presetSlotSelect.addEventListener('change', () => {
+  const slot = presetSlotSelect.value;
+  const data = savedPresetSlots[slot];
+  presetNameInput.value = data ? (data.name || '') : '';
+});
 
 function resizeCanvas() {
   waveCanvas.width = waveCanvas.offsetWidth * window.devicePixelRatio;
@@ -857,7 +1209,9 @@ function detectPitchYIN(buffer, sampleRate) {
       const x0 = tau > 0 ? tau - 1 : tau;
       const x2 = tau + 1 < half ? tau + 1 : tau;
 
-      if (x0 === tau || x2 === tau) return { freq: sampleRate / tau, confidence: 1 - yin[tau] };
+      if (x0 === tau || x2 === tau) {
+        return { freq: sampleRate / tau, confidence: 1 - yin[tau] };
+      }
 
       const s0 = yin[x0], s1 = yin[tau], s2 = yin[x2];
       const denom = 2 * (2 * s1 - s2 - s0);
@@ -1083,19 +1437,12 @@ function processAudio() {
   updateMeter(stableFreq, confidence);
 }
 
+populateNoteControls();
 buildDrumGrid();
 updateModeButtons();
 updateTargetDisplay();
+presetSlotSelect.dispatchEvent(new Event('change'));
 setStatus({ text: 'Tap the mic button to start listening', cls: '' });
 </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
-  });
-}
-</script>
-
 </body>
 </html>
