@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>DrumTune</title>
+
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DrumTune" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #e8ff47;
+      --accent2: #ff6b35;
+      --text: #f0f0f0;
+      --muted: #666;
+      --danger: #ff3b3b;
+      --good: #4cff91;
+      --warn: #ffb300;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .logo span {
+      color: var(--accent2);
+    }
+
+    .header-sub {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .mic-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .mic-btn.active {
+      background: var(--accent);
+      color: #0a0a0a;
+      box-shadow: 0 0 0 0 rgba(232,255,71,0.4);
+      animation: pulse 1.5s infinite;
+    }
+
+    .mic-btn svg {
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(232,255,71,0.4); }
+      70%  { box-shadow: 0 0 0 14px rgba(232,255,71,0); }
+      100% { box-shadow: 0 0 0 0 rgba(232,255,71,0); }
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .panel {
+      padding: 16px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drum-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .drum-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .drum-btn.selected {
+      border-color: var(--accent);
+      background: rgba(232,255,71,0.07);
+    }
+
+    .drum-btn .drum-icon { font-size: 22px; line-height: 1; }
+    .drum-btn .drum-name { font-size: 10px; font-weight: 500; letter-spacing: 0.5px; }
+    .drum-btn .drum-size { font-size: 8px; color: var(--muted); }
+    .drum-btn.selected .drum-name { color: var(--accent); }
+
+    .mode-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .mode-btn.selected {
+      border-color: var(--accent);
+      background: rgba(232,255,71,0.07);
+      color: var(--accent);
+    }
+
+    .target-info {
+      margin: 16px 20px 0;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .target-note-label,
+    .target-range-label {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .target-note-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .target-freq-val {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .target-range {
+      text-align: right;
+    }
+
+    .target-range-val {
+      font-size: 12px;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .meter-section {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .detected-display {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .detected-display::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .detected-display.active::before {
+      opacity: 1;
+      animation: scanline 2s linear infinite;
+    }
+
+    @keyframes scanline {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .detected-note {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 72px;
+      line-height: 1;
+      letter-spacing: 4px;
+      transition: color 0.3s;
+      color: var(--muted);
+    }
+
+    .detected-note.tuned { color: var(--good); }
+    .detected-note.close { color: var(--warn); }
+    .detected-note.off   { color: var(--accent2); }
+
+    .detected-freq {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .detected-freq span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .confidence-row {
+      margin-top: 10px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .confidence-row span {
+      color: var(--text);
+    }
+
+    .cents-meter {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 20px 16px;
+    }
+
+    .cents-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .cents-bar-wrap {
+      position: relative;
+      height: 28px;
+      background: var(--surface2);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .cents-zone {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .cents-zone.low      { left: 0; width: 38%; background: rgba(255,107,53,0.12); }
+    .cents-zone.mid-low  { left: 38%; width: 10%; background: rgba(255,179,0,0.12); }
+    .cents-zone.center   { left: 43%; width: 14%; background: rgba(76,255,145,0.15); }
+    .cents-zone.mid-hi   { left: 57%; width: 10%; background: rgba(255,179,0,0.12); }
+    .cents-zone.high     { left: 67%; width: 33%; background: rgba(255,107,53,0.12); }
+
+    .cents-center-line {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .cents-needle {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      width: 6px;
+      border-radius: 3px;
+      background: white;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.08s ease-out, background 0.3s;
+      z-index: 3;
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
+    }
+
+    .cents-needle.tuned { background: var(--good); box-shadow: 0 0 10px rgba(76,255,145,0.7); }
+    .cents-needle.close { background: var(--warn); box-shadow: 0 0 10px rgba(255,179,0,0.6); }
+    .cents-needle.off   { background: var(--accent2); box-shadow: 0 0 10px rgba(255,107,53,0.6); }
+
+    .cents-value {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .cents-value span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .waveform-wrap {
+      margin: 0 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    canvas#waveform {
+      display: block;
+      width: 100%;
+      height: 64px;
+    }
+
+    .status-bar {
+      margin: 16px 20px 20px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .status-bar.listening .status-dot { background: var(--accent); animation: blink 1s infinite; }
+    .status-bar.tuned .status-dot { background: var(--good); }
+    .status-bar.locked .status-dot { background: var(--warn); }
+    .status-bar.listening { border-color: rgba(232,255,71,0.3); color: var(--accent); }
+    .status-bar.tuned { border-color: rgba(76,255,145,0.3); color: var(--good); }
+    .status-bar.locked { border-color: rgba(255,179,0,0.3); color: var(--warn); }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .history-section {
+      padding: 0 20px 20px;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .history-note {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .history-note.good { color: var(--good); }
+    .history-note.warn { color: var(--warn); }
+    .history-note.bad  { color: var(--accent2); }
+
+    .history-meta { color: var(--muted); font-size: 10px; }
+    .history-time { color: var(--muted); font-size: 9px; }
+
+    .clear-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+</head>
+<body>
+  <header>
+    <div>
+      <div class="logo">Drum<span>Tune</span></div>
+      <div class="header-sub">Pitch Detection Tuner</div>
+    </div>
+
+    <button class="mic-btn" id="micBtn" title="Toggle microphone">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="panel">
+    <div class="section-label">Select Drum</div>
+    <div class="drum-grid" id="drumGrid"></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Head Mode</div>
+    <div class="mode-row">
+      <button class="mode-btn selected" id="batterBtn">Batter</button>
+      <button class="mode-btn" id="resonantBtn">Resonant</button>
+    </div>
+  </div>
+
+  <div class="target-info">
+    <div>
+      <div class="target-note-label">Target Note</div>
+      <div class="target-note-val" id="targetNote">—</div>
+      <div class="target-freq-val" id="targetFreq">— Hz</div>
+    </div>
+    <div class="target-range">
+      <div class="target-range-label">Tune Range</div>
+      <div class="target-range-val" id="targetRange">— Hz</div>
+    </div>
+  </div>
+
+  <div class="meter-section">
+    <div class="detected-display" id="detectedDisplay">
+      <div class="detected-note" id="detectedNote">—</div>
+      <div class="detected-freq">Detected: <span id="detectedFreqVal">— Hz</span></div>
+      <div class="confidence-row">Lock: <span id="lockVal">Waiting</span></div>
+    </div>
+
+    <div class="cents-meter">
+      <div class="cents-label-row">
+        <span>♭ FLAT</span>
+        <span>CENTS DEVIATION</span>
+        <span>SHARP ♯</span>
+      </div>
+
+      <div class="cents-bar-wrap">
+        <div class="cents-zone low"></div>
+        <div class="cents-zone mid-low"></div>
+        <div class="cents-zone center"></div>
+        <div class="cents-zone mid-hi"></div>
+        <div class="cents-zone high"></div>
+        <div class="cents-center-line"></div>
+        <div class="cents-needle" id="centsNeedle"></div>
+      </div>
+
+      <div class="cents-value">Deviation: <span id="centsVal">0 ¢</span></div>
+    </div>
+  </div>
+
+  <div class="waveform-wrap">
+    <canvas id="waveform"></canvas>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="status-dot"></div>
+    <span id="statusText">Tap the mic button to start listening</span>
+  </div>
+
+  <div class="history-section">
+    <div class="history-head">
+      <div class="section-label" style="margin-bottom:0;">Recent Readings</div>
+      <button class="clear-btn" id="clearBtn">Clear</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+<script>
+const DRUMS = [
+  {
+    id: 'snare_14x5', icon: '🥁', name: 'Snare', size: '14×5"',
+    batterHz: 175.0, resonantHz: 185.0, rangeHz: 24
+  },
+  {
+    id: 'snare_14x65', icon: '🥁', name: 'Deep Snare', size: '14×6.5"',
+    batterHz: 146.8, resonantHz: 155.6, rangeHz: 22
+  },
+  {
+    id: 'tom_10', icon: '🪘', name: 'Tom', size: '10"',
+    batterHz: 207.7, resonantHz: 220.0, rangeHz: 24
+  },
+  {
+    id: 'tom_12', icon: '🪘', name: 'Tom', size: '12"',
+    batterHz: 164.8, resonantHz: 174.6, rangeHz: 22
+  },
+  {
+    id: 'tom_14', icon: '🪘', name: 'Tom', size: '14"',
+    batterHz: 130.8, resonantHz: 138.6, rangeHz: 20
+  },
+  {
+    id: 'floorton_16', icon: '🪘', name: 'Floor Tom', size: '16"',
+    batterHz: 103.8, resonantHz: 110.0, rangeHz: 18
+  },
+  {
+    id: 'floorton_18', icon: '🪘', name: 'Floor Tom', size: '18"',
+    batterHz: 82.4, resonantHz: 87.3, rangeHz: 16
+  },
+  {
+    id: 'kick_22', icon: '🥁', name: 'Bass Drum', size: '22"',
+    batterHz: 52.0, resonantHz: 55.0, rangeHz: 10
+  },
+  {
+    id: 'kick_20', icon: '🥁', name: 'Bass Drum', size: '20"',
+    batterHz: 58.3, resonantHz: 61.7, rangeHz: 10
+  }
+];
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+let selectedDrum = DRUMS[0];
+let headMode = 'batter';
+
+let audioCtx = null;
+let analyser = null;
+let source = null;
+let stream = null;
+let rafId = null;
+let isListening = false;
+
+let pitchBuffer = new Float32Array(4096);
+let waveDataArr = null;
+
+let history = [];
+let lastHistoryTime = 0;
+
+let envelope = 0;
+let hitActive = false;
+let hitStartTime = 0;
+let recentPitches = [];
+let lastAcceptedFreq = null;
+
+const RMS_SILENCE = 0.01;
+const HIT_THRESHOLD = 0.045;
+const HIT_HOLD_MS = 220;
+const LOCK_WINDOW_MS = 380;
+const MAX_PITCHES_PER_HIT = 12;
+
+const micBtn = document.getElementById('micBtn');
+const drumGrid = document.getElementById('drumGrid');
+const batterBtn = document.getElementById('batterBtn');
+const resonantBtn = document.getElementById('resonantBtn');
+
+const targetNote = document.getElementById('targetNote');
+const targetFreq = document.getElementById('targetFreq');
+const targetRange = document.getElementById('targetRange');
+
+const detectedDisplay = document.getElementById('detectedDisplay');
+const detectedNote = document.getElementById('detectedNote');
+const detectedFreqVal = document.getElementById('detectedFreqVal');
+const centsNeedle = document.getElementById('centsNeedle');
+const centsVal = document.getElementById('centsVal');
+const lockVal = document.getElementById('lockVal');
+
+const statusBar = document.getElementById('statusBar');
+const statusText = document.getElementById('statusText');
+
+const waveCanvas = document.getElementById('waveform');
+const waveCtx = waveCanvas.getContext('2d');
+
+const historyList = document.getElementById('historyList');
+const clearBtn = document.getElementById('clearBtn');
+
+function currentTargetHz() {
+  return headMode === 'batter' ? selectedDrum.batterHz : selectedDrum.resonantHz;
+}
+
+function freqToNote(freq) {
+  if (!freq || freq <= 0) return { name: '—', cents: 0, octave: 0, midi: 0 };
+  const midi = 69 + 12 * Math.log2(freq / 440);
+  const rounded = Math.round(midi);
+  const cents = Math.round((midi - rounded) * 100);
+  const octave = Math.floor(rounded / 12) - 1;
+  const name = NOTE_NAMES[((rounded % 12) + 12) % 12];
+  return { name, cents, octave, midi: rounded };
+}
+
+function freqToNoteStr(freq) {
+  const n = freqToNote(freq);
+  return `${n.name}${n.octave}`;
+}
+
+function median(values) {
+  if (!values.length) return null;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+function centsFromTarget(freq, target) {
+  return Math.round(1200 * Math.log2(freq / target));
+}
+
+function getTuneClass(cents) {
+  const abs = Math.abs(cents);
+  if (abs <= 5) return 'tuned';
+  if (abs <= 15) return 'close';
+  return 'off';
+}
+
+function getTuneStatus(cents, locked) {
+  if (!locked) return { text: 'Listening for a drum hit...', cls: 'listening' };
+  const abs = Math.abs(cents);
+  if (abs <= 5) return { text: 'In tune', cls: 'tuned' };
+  if (abs <= 15) return { text: cents < 0 ? 'Slightly flat. Tighten a little.' : 'Slightly sharp. Loosen a little.', cls: 'locked' };
+  return { text: cents < 0 ? 'Too flat. Increase tension.' : 'Too sharp. Reduce tension.', cls: 'locked' };
+}
+
+function setStatus(obj) {
+  statusBar.className = 'status-bar' + (obj.cls ? ' ' + obj.cls : '');
+  statusText.textContent = obj.text;
+}
+
+function buildDrumGrid() {
+  drumGrid.innerHTML = '';
+  DRUMS.forEach(drum => {
+    const btn = document.createElement('button');
+    btn.className = 'drum-btn' + (drum.id === selectedDrum.id ? ' selected' : '');
+    btn.innerHTML = `
+      <span class="drum-icon">${drum.icon}</span>
+      <span class="drum-name">${drum.name}</span>
+      <span class="drum-size">${drum.size}</span>
+    `;
+    btn.addEventListener('click', () => {
+      selectedDrum = drum;
+      buildDrumGrid();
+      updateTargetDisplay();
+      resetMeter();
+    });
+    drumGrid.appendChild(btn);
+  });
+}
+
+function updateModeButtons() {
+  batterBtn.classList.toggle('selected', headMode === 'batter');
+  resonantBtn.classList.toggle('selected', headMode === 'resonant');
+}
+
+batterBtn.addEventListener('click', () => {
+  headMode = 'batter';
+  updateModeButtons();
+  updateTargetDisplay();
+  resetMeter();
+});
+
+resonantBtn.addEventListener('click', () => {
+  headMode = 'resonant';
+  updateModeButtons();
+  updateTargetDisplay();
+  resetMeter();
+});
+
+function updateTargetDisplay() {
+  const hz = currentTargetHz();
+  targetNote.textContent = freqToNoteStr(hz);
+  targetFreq.textContent = `${hz.toFixed(1)} Hz`;
+  targetRange.textContent = `${(hz - selectedDrum.rangeHz).toFixed(0)}–${(hz + selectedDrum.rangeHz).toFixed(0)} Hz`;
+}
+
+function resetMeter() {
+  detectedNote.textContent = '—';
+  detectedNote.className = 'detected-note';
+  detectedFreqVal.textContent = '— Hz';
+  centsNeedle.style.left = '50%';
+  centsNeedle.className = 'cents-needle';
+  centsVal.textContent = '0 ¢';
+  lockVal.textContent = 'Waiting';
+  detectedDisplay.classList.remove('active');
+  lastAcceptedFreq = null;
+  recentPitches = [];
+  setStatus({ text: 'Listening for a drum hit...', cls: 'listening' });
+}
+
+function resizeCanvas() {
+  waveCanvas.width = waveCanvas.offsetWidth * window.devicePixelRatio;
+  waveCanvas.height = waveCanvas.offsetHeight * window.devicePixelRatio;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawWaveform() {
+  if (!analyser || !waveDataArr) {
+    waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+    return;
+  }
+
+  analyser.getByteTimeDomainData(waveDataArr);
+  const W = waveCanvas.width;
+  const H = waveCanvas.height;
+
+  waveCtx.clearRect(0, 0, W, H);
+
+  waveCtx.beginPath();
+  waveCtx.strokeStyle = '#2a2a2a';
+  waveCtx.lineWidth = 1;
+  waveCtx.moveTo(0, H / 2);
+  waveCtx.lineTo(W, H / 2);
+  waveCtx.stroke();
+
+  waveCtx.beginPath();
+  waveCtx.strokeStyle = 'rgba(232,255,71,0.85)';
+  waveCtx.lineWidth = 1.5 * window.devicePixelRatio;
+
+  const sliceW = W / waveDataArr.length;
+  let x = 0;
+
+  for (let i = 0; i < waveDataArr.length; i++) {
+    const v = waveDataArr[i] / 128;
+    const y = (v * H) / 2;
+    if (i === 0) waveCtx.moveTo(x, y);
+    else waveCtx.lineTo(x, y);
+    x += sliceW;
+  }
+
+  waveCtx.stroke();
+}
+
+function detectPitchYIN(buffer, sampleRate) {
+  const n = buffer.length;
+  const half = Math.floor(n / 2);
+  const yin = new Float32Array(half);
+  let runningSum = 0;
+
+  yin[0] = 1;
+
+  for (let tau = 1; tau < half; tau++) {
+    let diff = 0;
+    for (let i = 0; i < half; i++) {
+      const d = buffer[i] - buffer[i + tau];
+      diff += d * d;
+    }
+    runningSum += diff;
+    yin[tau] = runningSum > 0 ? (diff * tau) / runningSum : 1;
+  }
+
+  const threshold = 0.12;
+  for (let tau = 2; tau < half; tau++) {
+    if (yin[tau] < threshold) {
+      while (tau + 1 < half && yin[tau + 1] < yin[tau]) tau++;
+
+      const x0 = tau > 0 ? tau - 1 : tau;
+      const x2 = tau + 1 < half ? tau + 1 : tau;
+
+      if (x0 === tau || x2 === tau) return { freq: sampleRate / tau, confidence: 1 - yin[tau] };
+
+      const s0 = yin[x0], s1 = yin[tau], s2 = yin[x2];
+      const denom = 2 * (2 * s1 - s2 - s0);
+      const betterTau = denom !== 0 ? tau + (s2 - s0) / denom : tau;
+
+      return {
+        freq: sampleRate / betterTau,
+        confidence: Math.max(0, Math.min(1, 1 - yin[tau]))
+      };
+    }
+  }
+
+  return { freq: -1, confidence: 0 };
+}
+
+function withinTargetWindow(freq) {
+  const target = currentTargetHz();
+  const min = Math.max(30, target - selectedDrum.rangeHz * 1.35);
+  const max = target + selectedDrum.rangeHz * 1.35;
+  return freq >= min && freq <= max;
+}
+
+function updateMeter(freq, confidence) {
+  const target = currentTargetHz();
+  const cents = centsFromTarget(freq, target);
+  const cls = getTuneClass(cents);
+  const noteStr = freqToNoteStr(freq);
+
+  detectedNote.textContent = noteStr;
+  detectedNote.className = `detected-note ${cls}`;
+  detectedFreqVal.textContent = `${freq.toFixed(1)} Hz`;
+  detectedDisplay.classList.add('active');
+
+  const pct = Math.max(0, Math.min(100, 50 + (cents / 100) * 50));
+  centsNeedle.style.left = `${pct}%`;
+  centsNeedle.className = `cents-needle ${cls}`;
+
+  const sign = cents > 0 ? '+' : '';
+  centsVal.textContent = `${sign}${cents} ¢`;
+  lockVal.textContent = `${Math.round(confidence * 100)}%`;
+
+  setStatus(getTuneStatus(cents, true));
+  addHistory(noteStr, freq, cents, cls);
+}
+
+function addHistory(note, freq, cents, cls) {
+  const now = Date.now();
+  if (now - lastHistoryTime < 900) return;
+  lastHistoryTime = now;
+
+  const sign = cents > 0 ? '+' : '';
+  const time = new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  history.unshift({ note, freq, cents, cls, time });
+  if (history.length > 8) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  historyList.innerHTML = '';
+  history.forEach(item => {
+    const mood = item.cls === 'tuned' ? 'good' : item.cls === 'close' ? 'warn' : 'bad';
+    const sign = item.cents > 0 ? '+' : '';
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    row.innerHTML = `
+      <span class="history-note ${mood}">${item.note}</span>
+      <span class="history-meta">${item.freq.toFixed(1)} Hz &nbsp; ${sign}${item.cents}¢</span>
+      <span class="history-time">${item.time}</span>
+    `;
+    historyList.appendChild(row);
+  });
+}
+
+clearBtn.addEventListener('click', () => {
+  history = [];
+  renderHistory();
+});
+
+async function startListening() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 4096;
+    analyser.smoothingTimeConstant = 0.0;
+
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    waveDataArr = new Uint8Array(analyser.fftSize);
+
+    isListening = true;
+    micBtn.classList.add('active');
+
+    setStatus({ text: 'Listening for a drum hit...', cls: 'listening' });
+    processAudio();
+  } catch (err) {
+    console.error(err);
+    setStatus({ text: 'Mic access denied or unavailable.', cls: '' });
+  }
+}
+
+function stopListening() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+
+  if (audioCtx) {
+    audioCtx.close();
+  }
+
+  analyser = null;
+  source = null;
+  stream = null;
+  audioCtx = null;
+  waveDataArr = null;
+  isListening = false;
+  micBtn.classList.remove('active');
+
+  waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+  setStatus({ text: 'Tap the mic button to start listening', cls: '' });
+}
+
+micBtn.addEventListener('click', async () => {
+  if (isListening) stopListening();
+  else await startListening();
+});
+
+document.addEventListener('visibilitychange', async () => {
+  if (!audioCtx) return;
+  if (document.visibilityState === 'visible' && audioCtx.state === 'suspended') {
+    try { await audioCtx.resume(); } catch (_) {}
+  }
+});
+
+window.addEventListener('touchstart', async () => {
+  if (audioCtx && audioCtx.state === 'suspended') {
+    try { await audioCtx.resume(); } catch (_) {}
+  }
+}, { passive: true });
+
+function processAudio() {
+  rafId = requestAnimationFrame(processAudio);
+  if (!analyser || !audioCtx) return;
+
+  analyser.getFloatTimeDomainData(pitchBuffer);
+  drawWaveform();
+
+  let rms = 0;
+  let peak = 0;
+  for (let i = 0; i < pitchBuffer.length; i++) {
+    const s = pitchBuffer[i];
+    rms += s * s;
+    const a = Math.abs(s);
+    if (a > peak) peak = a;
+  }
+  rms = Math.sqrt(rms / pitchBuffer.length);
+
+  envelope = 0.85 * envelope + 0.15 * peak;
+
+  const now = performance.now();
+
+  if (!hitActive && envelope > HIT_THRESHOLD && rms > RMS_SILENCE) {
+    hitActive = true;
+    hitStartTime = now;
+    recentPitches = [];
+    lastAcceptedFreq = null;
+    lockVal.textContent = 'Acquiring';
+  }
+
+  if (!hitActive) return;
+
+  const elapsed = now - hitStartTime;
+
+  if (elapsed > LOCK_WINDOW_MS) {
+    hitActive = false;
+    recentPitches = [];
+    return;
+  }
+
+  const { freq, confidence } = detectPitchYIN(pitchBuffer, audioCtx.sampleRate);
+
+  if (freq <= 0) return;
+  if (freq < 30 || freq > 2000) return;
+  if (!withinTargetWindow(freq)) return;
+  if (confidence < 0.72) return;
+
+  recentPitches.push(freq);
+  if (recentPitches.length > MAX_PITCHES_PER_HIT) recentPitches.shift();
+
+  if (elapsed < HIT_HOLD_MS) {
+    lockVal.textContent = 'Locking';
+    return;
+  }
+
+  const stableFreq = median(recentPitches);
+  if (!stableFreq) return;
+
+  if (lastAcceptedFreq && Math.abs(stableFreq - lastAcceptedFreq) > currentTargetHz() * 0.18) {
+    return;
+  }
+
+  lastAcceptedFreq = stableFreq;
+  updateMeter(stableFreq, confidence);
+}
+
+buildDrumGrid();
+updateModeButtons();
+updateTargetDisplay();
+setStatus({ text: 'Tap the mic button to start listening', cls: '' });
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+  });
+}
+</script>
+
+</body>
+</html>
